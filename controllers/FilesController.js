@@ -18,42 +18,40 @@ class FilesController {
       response.status(401).json({ error: 'Unauthorized' });
     }
 
-    const {
-      name, type, parentId = 0, isPublic = false, data,
-    } = request.body;
+    const fileDetails = request.body;
 
-    if (!name) {
+    if (!fileDetails.name) {
       return response.status(400).json({ error: 'Missing name' });
     }
 
-    if (!type) {
+    if (!fileDetails.type || !['folder', 'file', 'image'].includes(fileDetails.type)) {
       return response.status(400).json({ error: 'Missing type' });
     }
 
-    if (!data && type !== 'folder') {
+    if (!fileDetails.data && fileDetails.type !== 'folder') {
       return response.status(400).json({ error: 'Missing data' });
     }
 
-    if (parentId !== 0) {
-      const parentFile = await dbClient.getFileById(parentId);
+    if (fileDetails.parentId !== 0) {
+      const parentFile = await dbClient.getFileById(fileDetails.parentId);
       if (!parentFile) {
         return response.status(400).json({ error: 'Parent not found' });
       }
 
-      if (parentFile && parentFile.type === 'folder') {
+      if (parentFile.type !== 'folder') {
         return response.status(400).json({ error: 'Parent is not a folder' });
       }
     }
 
     const fileDoc = {
       userId: user._id,
-      name,
-      type,
-      isPublic,
-      parentId: parentId || 0,
+      name: fileDetails.name,
+      type: fileDetails.type,
+      isPublic: fileDetails.isPublic || false,
+      parentId: fileDetails.parentId || 0,
     };
 
-    if (type === 'folder') {
+    if (fileDetails.type === 'folder') {
       const resultFolder = await dbClient.createFile(fileDoc);
       return response.status(201).json(resultFolder.ops[0]);
     }
@@ -62,7 +60,7 @@ class FilesController {
     await mkdirAsync(folderPath, { recursive: true });
 
     const localPath = path.join(folderPath, uuidv4());
-    await writeFileAsync(localPath, Buffer.from(data, 'base64'));
+    await writeFileAsync(localPath, Buffer.from(fileDetails.data, 'base64'));
 
     fileDoc.localPath = localPath;
     const result = await dbClient.createFile(fileDoc);

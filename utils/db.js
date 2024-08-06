@@ -37,13 +37,13 @@ class DBClient {
 
   async getUserById(userId) {
     const users = await this.db.collection('users');
-    const user = await users.findOne({ _id: ObjectID(userId) });
+    const user = await users.findOne({ _id: new ObjectID(userId) });
     return user;
   }
 
   async getFileById(fileId) {
     const files = await this.db.collection('files');
-    const file = await files.findOne({ _id: ObjectID(fileId) });
+    const file = await files.findOne({ _id: new ObjectID(fileId) });
     return file;
   }
 
