@@ -15,7 +15,7 @@ class FilesController {
     const user = await dbClient.getUserById(userId);
 
     if (user == null) {
-      response.status(401).json({ error: 'Unauthorized' });
+      return response.status(401).json({ error: 'Unauthorized' });
     }
 
     const fileDetails = request.body;
@@ -67,6 +67,49 @@ class FilesController {
     const newFile = result.ops[0];
 
     return response.status(201).json(newFile);
+  }
+
+  static async getShow(request, response) {
+    const xToken = request.get('X-Token');
+    const userId = await redisClient.get(`auth_${xToken}`);
+    const user = await dbClient.getUserById(userId);
+
+    if (user == null) {
+      return response.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const fileId = request.params.id;
+    const result = await dbClient.getFileById(fileId);
+    const file = result.ops[0];
+
+    if (!file) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+
+    if (file.userId !== userId) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+
+    return response.status(200).json(file);
+  }
+
+  static async getIndex(request, response) {
+    const xToken = request.get('X-Token');
+    const userId = await redisClient.get(`auth_${xToken}`);
+    const user = await dbClient.getUserById(userId);
+
+    if (user == null) {
+      return response.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { query } = request;
+    console.log(query);
+    if (Object.keys(query).length < 1) {
+      const allFiles = await dbClient.getAllFiles();
+      return response.status(200).json(allFiles);
+    }
+
+    return response.status(200).json({});
   }
 }
 

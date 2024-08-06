@@ -36,13 +36,13 @@ class DBClient {
   }
 
   async getUserById(userId) {
-    const users = await this.db.collection('users');
+    const users = this.db.collection('users');
     const user = await users.findOne({ _id: new ObjectID(userId) });
     return user;
   }
 
   async getFileById(fileId) {
-    const files = await this.db.collection('files');
+    const files = this.db.collection('files');
     const file = await files.findOne({ _id: new ObjectID(fileId) });
     return file;
   }
@@ -51,6 +51,12 @@ class DBClient {
     const fileCollections = this.db.collection('files');
     const result = await fileCollections.insertOne(fileDocument);
     return result;
+  }
+
+  async getAllFiles() {
+    const collections = this.db.collection('files');
+    const files = await collections.find({}).toArray();
+    return files;
   }
 }
 
