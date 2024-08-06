@@ -9,6 +9,7 @@ class DBClient {
     const url = `mongodb://${this.host}:${this.port}`;
     this.client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
     this.client.connect();
+    this.db = this.client.db(this.database);
   }
 
   isAlive() {
@@ -21,9 +22,7 @@ class DBClient {
     if (this.isAlive() === false) {
       return 0;
     }
-
-    const database = this.client.db(this.database);
-    const noOfUsers = await database.collection('users').countDocuments();
+    const noOfUsers = await this.db.collection('users').countDocuments();
     return noOfUsers;
   }
 
@@ -32,9 +31,7 @@ class DBClient {
     if (this.isAlive() === false) {
       return 0;
     }
-
-    const database = this.client.db(this.database);
-    const noOfFiles = await database.collection('files').countDocuments();
+    const noOfFiles = await this.db.collection('files').countDocuments();
     return noOfFiles;
   }
 }
