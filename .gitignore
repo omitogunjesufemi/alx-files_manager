@@ -1,3 +1,5 @@
 node_modules
 main_files
 image*
+main_db.js
+main_redis.js

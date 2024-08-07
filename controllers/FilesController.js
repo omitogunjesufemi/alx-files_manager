@@ -3,12 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
 import { v4 as uuidv4 } from 'uuid';
+import Queue from 'bull/lib/queue';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 const mkdirAsync = promisify(fs.mkdir);
 const writeFileAsync = promisify(fs.writeFile);
 const readFileAsync = promisify(fs.readFile);
+const fileQueue = new Queue('fileQueue');
 
 class FilesController {
   static async postUpload(request, response) {
@@ -67,6 +69,10 @@ class FilesController {
     fileDoc.localPath = localPath;
     const result = await dbClient.createFile(fileDoc);
     const newFile = result.ops[0];
+
+    if (fileDetails.type === 'image') {
+      await fileQueue.add({ userId: user._id, fileId: newFile._id });
+    }
 
     return response.status(201).json(newFile);
   }
@@ -194,12 +200,19 @@ class FilesController {
       return response.status(404).json({ error: 'Not found' });
     }
 
-    if (!fs.existsSync(file.localPath)) {
+    const { size } = request.query;
+    let filePath = file.localPath;
+
+    if (size) {
+      filePath = `${file.localPath}_${size}`;
+    }
+
+    if (!fs.existsSync(filePath)) {
       return response.status(404).json({ error: 'Not found' });
     }
 
     const mimeType = mime.lookup(file.name);
-    const fileData = await readFileAsync(file.localPath);
+    const fileData = await readFileAsync(filePath);
 
     response.setHeader('Content-Type', mimeType);
     return response.status(200).send(fileData);
