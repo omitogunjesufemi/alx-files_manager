@@ -1,12 +1,14 @@
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
+import mime from 'mime-types';
 import { v4 as uuidv4 } from 'uuid';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 const mkdirAsync = promisify(fs.mkdir);
 const writeFileAsync = promisify(fs.writeFile);
+const readFileAsync = promisify(fs.readFile);
 
 class FilesController {
   static async postUpload(request, response) {
@@ -82,7 +84,6 @@ class FilesController {
     const file = await dbClient.getFileById(fileId);
 
     if (!file) {
-      console.log('No file here');
       return response.status(404).json({ error: 'Not found' });
     }
 
@@ -138,7 +139,6 @@ class FilesController {
     const file = await dbClient.getFileById(fileId);
 
     if (!file) {
-      console.log('No file here');
       return response.status(404).json({ error: 'Not found' });
     }
 
@@ -163,7 +163,6 @@ class FilesController {
     const file = await dbClient.getFileById(fileId);
 
     if (!file) {
-      console.log('No file here');
       return response.status(404).json({ error: 'Not found' });
     }
 
@@ -173,6 +172,37 @@ class FilesController {
 
     await dbClient.updateFile(file, { isPublic: false });
     return response.status(200).json(await dbClient.getFileById(fileId));
+  }
+
+  static async getFile(request, response) {
+    const fileId = request.params.id;
+    const file = await dbClient.getFileById(fileId);
+
+    const xToken = request.get('X-Token');
+    const userId = await redisClient.get(`auth_${xToken}`);
+
+    if (!file) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+    // const user = await dbClient.getUserById(userId);
+
+    if (file.type === 'folder') {
+      return response.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
+
+    if (file.isPublic === false && file.userId.toString() !== userId) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+
+    if (!fs.existsSync(file.localPath)) {
+      return response.status(404).json({ error: 'Not found' });
+    }
+
+    const mimeType = mime.lookup(file.name);
+    const fileData = await readFileAsync(file.localPath);
+
+    response.setHeader('Content-Type', mimeType);
+    return response.status(200).send(fileData);
   }
 }
 

@@ -26,6 +26,9 @@ router.get('/files', FilesController.getIndex);
 router.put('/files/:id/publish', FilesController.putPublish);
 router.put('/files/:id/unpublish', FilesController.putUnpublish);
 
+// Return content of the file document based on ID
+router.get('/files/:id/data', FilesController.getFile);
+
 // Post create new user
 router.post('/users', UsersController.postNew);
 
