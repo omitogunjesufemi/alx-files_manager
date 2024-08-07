@@ -32,7 +32,7 @@ class FilesController {
       return response.status(400).json({ error: 'Missing data' });
     }
 
-    if (fileDetails.parentId !== 0) {
+    if (fileDetails.parentId !== 0 && fileDetails.parentId) {
       const parentFile = await dbClient.getFileById(fileDetails.parentId);
       if (!parentFile) {
         return response.status(400).json({ error: 'Parent not found' });
@@ -79,14 +79,14 @@ class FilesController {
     }
 
     const fileId = request.params.id;
-    const result = await dbClient.getFileById(fileId);
-    const file = result.ops[0];
+    const file = await dbClient.getFileById(fileId);
 
     if (!file) {
+      console.log('No file here');
       return response.status(404).json({ error: 'Not found' });
     }
 
-    if (file.userId !== userId) {
+    if (file.userId.toString() !== userId) {
       return response.status(404).json({ error: 'Not found' });
     }
 
@@ -103,13 +103,26 @@ class FilesController {
     }
 
     const { query } = request;
-    console.log(query);
+
     if (Object.keys(query).length < 1) {
       const allFiles = await dbClient.getAllFiles();
       return response.status(200).json(allFiles);
     }
 
-    return response.status(200).json({});
+    const parentId = (request.query.parentId && request.query.parentId !== '0') || 0;
+    const page = request.query.page || 0;
+
+    const pageSize = 20;
+    const skip = parseInt(page, 10) * pageSize;
+
+    const fileColl = dbClient.db.collection('files');
+    const files = await fileColl.aggregate([
+      { $match: { userId: user._id, parentId } },
+      { $skip: skip },
+      { $limit: pageSize },
+    ]).toArray();
+
+    return response.status(200).json(files);
   }
 }
 
