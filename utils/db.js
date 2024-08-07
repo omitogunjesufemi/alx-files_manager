@@ -58,6 +58,12 @@ class DBClient {
     const files = await collections.find({}).toArray();
     return files;
   }
+
+  async updateFile(fileDoc, newUpdate) {
+    const fileCollections = this.db.collection('files');
+    const result = await fileCollections.updateOne(fileDoc, { $set: newUpdate });
+    return result;
+  }
 }
 
 const dbClient = new DBClient();

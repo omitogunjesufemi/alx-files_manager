@@ -17,8 +17,14 @@ router.get('/users/me', UsersController.getMe);
 
 // Upload new files
 router.post('/files', FilesController.postUpload);
+
+// Show files
 router.get('/files/:id', FilesController.getShow);
 router.get('/files', FilesController.getIndex);
+
+// File Publish and Unpublish
+router.put('/files/:id/publish', FilesController.putPublish);
+router.put('/files/:id/unpublish', FilesController.putUnpublish);
 
 // Post create new user
 router.post('/users', UsersController.postNew);
