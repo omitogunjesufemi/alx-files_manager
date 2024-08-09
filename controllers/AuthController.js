@@ -15,9 +15,13 @@ class AuthController {
     const userCollections = dbClient.db.collection('users');
     const user = await userCollections.findOne({ email: userDetails[0] });
 
-    if (user == null) {
+    const hash = crypto.createHash('sha1').update(userDetails[1], 'utf-8');
+    const hashPwd = hash.digest('hex');
+
+    if (user == null || hashPwd !== user.password) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
+
     const uuidToken = uuidv4();
     const authKey = `auth_${uuidToken}`;
     await redisClient.set(authKey, user._id, 86400);
