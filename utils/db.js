@@ -23,6 +23,9 @@ class DBClient {
       return 0;
     }
     const noOfUsers = await this.db.collection('users').countDocuments();
+    if (Object.entires(noOfUsers).length === 0) {
+      return 0;
+    }
     return noOfUsers;
   }
 
