@@ -19,7 +19,11 @@ class AuthController {
     const hash = crypto.createHash('sha1').update(userDetails[1], 'utf-8');
     const hashPwd = hash.digest('hex');
 
-    if (user == null || hashPwd !== user.password) {
+    if (user == null) {
+      return response.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (hashPwd !== user.password) {
       return response.status(401).json({ error: 'Unauthorized' });
     }
 
