@@ -12,9 +12,9 @@ class AppController {
     });
   }
 
-  static getStats(request, response) {
-    const usersCount = dbClient.nbUsers();
-    const filesCount = dbClient.nbUsers();
+  static async getStats(request, response) {
+    const usersCount = await dbClient.nbUsers();
+    const filesCount = await dbClient.nbUsers();
 
     response.status(200).json({
       users: usersCount,
